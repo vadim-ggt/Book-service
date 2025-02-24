@@ -1,17 +1,18 @@
 package ru.store.springbooks.service;
 
-
-import ru.store.springbooks.model.Book;
-
 import java.util.List;
-
+import ru.store.springbooks.model.Book;
 
 
 public interface BookService {
-     List<Book> findAllBooks();
-     Book saveBook(Book book);
-     Book getBookById(int id);
-     Book updateBook(Book book);
-     void deleteBook(int id);
-     Book getBookByTitle(String title);
+
+    List<Book> findAllBooks();
+
+    Book saveBook(Book book);
+
+    Book getBookById(int id);
+
+    void deleteBook(int id);
+
+    Book getBookByTitle(String title);
 }

@@ -1,18 +1,17 @@
 package ru.store.springbooks.service.impl;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.store.springbooks.model.Book;
-import ru.store.springbooks.repository.InMemoryBookDAO;
+import ru.store.springbooks.repository.InMemoryBookDao;
 import ru.store.springbooks.service.BookService;
-
-import java.util.List;
 
 @Service
 @AllArgsConstructor
 public class InMemoryBookServiceImpl implements BookService {
 
-    private final InMemoryBookDAO repository;
+    private final InMemoryBookDao repository;
 
     @Override
     public List<Book> findAllBooks() {
@@ -27,11 +26,6 @@ public class InMemoryBookServiceImpl implements BookService {
     @Override
     public Book getBookById(int id) {
         return repository.getBookById(id);
-    }
-
-    @Override
-    public Book updateBook(Book book) {
-        return repository.updateBook(book);
     }
 
     @Override
