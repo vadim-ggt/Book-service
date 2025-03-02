@@ -42,9 +42,9 @@ public class BookController {
         service.deleteBook(id);
     }
 
-    @GetMapping("/searchByTitle")
-    public Book getBookByTitle(@RequestParam String title) {
-        return service.getBookByTitle(title);
+   @GetMapping("/search")
+    public Book getBookByTitle(@RequestParam Map<String, String> params) {
+        return service.getBookByTitle(params);
     }
 
 }
