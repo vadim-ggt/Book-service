@@ -38,10 +38,20 @@ public class InMemoryBookDao {
     }
 
 
-    public Book getBookByTitle(String title) {
+    public Book getBookByTitle(Map<String, String> params) {
         return books.stream()
-                .filter(book -> book.getTitle().equals(title)) // Совпадение по названию
+                .filter(book ->
+                        !params.containsKey("title") || book.getTitle()
+                                .equalsIgnoreCase(params.get("title")))
+                .filter(book ->
+                        !params.containsKey("author") || book.getAuthor()
+                                .equalsIgnoreCase(params.get("author")))
+                .filter(book -> {
+                    return !params.containsKey("year")
+                            || book.getYear() == Integer.parseInt(params.get("year"));
+                }) // Совпадение по году, если передан параметр year
                 .findFirst() // Берем первый найденный элемент
-                .orElse(null); // Если книги не найдены, возвращаем null
+                .orElseThrow(()
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Книга не найдена"));
     }
 }
