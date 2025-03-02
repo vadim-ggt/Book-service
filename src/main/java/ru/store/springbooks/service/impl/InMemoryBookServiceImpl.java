@@ -34,7 +34,7 @@ public class InMemoryBookServiceImpl implements BookService {
     }
 
     @Override
-    public Book getBookByTitle(String title) {
-        return repository.getBookByTitle(title);
+    public Book getBookByTitle(Map<String, String> params) {
+        return repository.getBookByTitle(params);
     }
 }
