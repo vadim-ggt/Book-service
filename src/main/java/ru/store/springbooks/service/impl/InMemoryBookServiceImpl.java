@@ -1,6 +1,7 @@
 package ru.store.springbooks.service.impl;
 
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.store.springbooks.model.Book;
@@ -37,4 +38,5 @@ public class InMemoryBookServiceImpl implements BookService {
     public Book getBookByTitle(Map<String, String> params) {
         return repository.getBookByTitle(params);
     }
+
 }

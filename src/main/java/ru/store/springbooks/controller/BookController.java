@@ -1,6 +1,7 @@
 package ru.store.springbooks.controller;
 
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.store.springbooks.model.Book;
 import ru.store.springbooks.service.BookService;
-
 
 @RestController
 @RequestMapping("/api/v1/books")
@@ -42,7 +42,7 @@ public class BookController {
         service.deleteBook(id);
     }
 
-   @GetMapping("/search")
+    @GetMapping("/search")
     public Book getBookByTitle(@RequestParam Map<String, String> params) {
         return service.getBookByTitle(params);
     }

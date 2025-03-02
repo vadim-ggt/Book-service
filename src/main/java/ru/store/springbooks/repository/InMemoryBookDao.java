@@ -2,7 +2,10 @@ package ru.store.springbooks.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 import ru.store.springbooks.model.Book;
 
 @Repository
