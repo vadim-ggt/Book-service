@@ -14,5 +14,5 @@ public interface BookService {
 
     void deleteBook(int id);
 
-    Book getBookByTitle(String title);
+    Book getBookByTitle(Map<String, String> params);
 }
