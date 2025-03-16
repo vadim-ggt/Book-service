@@ -11,9 +11,11 @@ public interface BookService {
 
     Book saveBook(Book book);
 
-    Book getBookById(int id);
+    Book getBookById(Long id);
 
-    void deleteBook(int id);
+    void deleteBook(Long id);
 
-    Book getBookByTitle(Map<String, String> params);
+    List<Book> searchBook(Map<String, String> params);
+
+    Book updateBook(Long id, Book updatedBook);
 }
