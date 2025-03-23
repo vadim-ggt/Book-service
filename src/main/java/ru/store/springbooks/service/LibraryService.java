@@ -11,7 +11,7 @@ public interface LibraryService {
 
     Library getLibraryById(Long id);
 
-    void deleteLibrary(Long id);
+    boolean deleteLibrary(Long id);
 
     Library addUserToLibrary(Long libraryId, Long userId);  // Добавить пользователя в библиотеку
 

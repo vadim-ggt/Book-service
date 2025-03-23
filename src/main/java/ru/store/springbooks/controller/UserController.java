@@ -2,6 +2,7 @@ package ru.store.springbooks.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.store.springbooks.model.Book;
 import ru.store.springbooks.model.User;
 import ru.store.springbooks.service.UserService;
 
@@ -33,15 +33,31 @@ public class UserController {
         return ResponseEntity.ok(savedUser);
     }
 
+
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+        try {
+            return ResponseEntity.ok(userService.getUserById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        try {
+            boolean isDeleted = userService.deleteUser(id);
+            if (isDeleted) {
+                return ResponseEntity.ok("Пользователь успешно удален");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Пользователь с данным ID не найден");
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка при удалении пользователя: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}/libraries")
@@ -49,21 +65,18 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserLibraries(id));
     }
 
-    @GetMapping("/{id}/books")
-    public ResponseEntity<List<?>> getUserBooks(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserBooks(id));
-    }
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        User user = userService.updateUser(id, updatedUser);
-        return ResponseEntity.ok(user);
+        try {
+            User user = userService.updateUser(id, updatedUser);
+            return ResponseEntity.ok(user);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @PutMapping("/{userId}/rent/{bookId}")
-    public ResponseEntity<Book> rentBook(@PathVariable Long userId, @PathVariable Long bookId) {
-        Book rentedBook = userService.rentBook(userId, bookId);
-        return ResponseEntity.ok(rentedBook);
-    }
+
+
 
 }

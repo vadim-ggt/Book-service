@@ -1,19 +1,14 @@
 package ru.store.springbooks.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.*;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import java.util.List;
 
 @Entity
 @Table(name = "books")
@@ -22,7 +17,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(exclude = "library")
-@ToString(exclude = "library")
+@ToString(exclude = {"library", "requests"})
 public class Book {
 
     @Id
@@ -32,14 +27,13 @@ public class Book {
     private String title;
     private String author;
     private int year;
-    private boolean available = true;
 
-    @ManyToOne
-    @JoinColumn(name = "library_id", referencedColumnName = "id")
-    private Library library;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private User user;
+    private List<Request> requests;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "library_id", referencedColumnName = "id")
+    @JsonBackReference(value = "y")
+    private Library library;
 }

@@ -2,6 +2,7 @@ package ru.store.springbooks.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,22 +33,43 @@ public class LibraryController {
         return ResponseEntity.ok(savedLibrary);
     }
 
+
     @GetMapping("/{id}")
     public ResponseEntity<Library> getLibraryById(@PathVariable Long id) {
-        return ResponseEntity.ok(libraryService.getLibraryById(id));
+        try {
+            return ResponseEntity.ok(libraryService.getLibraryById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
+
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLibrary(@PathVariable Long id) {
-        libraryService.deleteLibrary(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> deleteLibrary(@PathVariable Long id) {
+        try {
+            boolean isDeleted = libraryService.deleteLibrary(id);
+            if (isDeleted) {
+                return ResponseEntity.ok("Библиотека успешно удалена");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Библиотека с данным ID не найдена");
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка при удалении библиотеки: " + e.getMessage());
+        }
     }
 
+
     @PostMapping("/{libraryId}/addUser/{userId}")
-    public ResponseEntity<Library> addUserToLibrary(@PathVariable Long libraryId,
+    public ResponseEntity<Library>  addUserToLibrary(@PathVariable Long libraryId,
                                                     @PathVariable Long userId) {
-        Library updatedLibrary = libraryService.addUserToLibrary(libraryId, userId);
-        return ResponseEntity.ok(updatedLibrary);
+        try {
+            Library updatedLibrary = libraryService.addUserToLibrary(libraryId, userId);
+            return ResponseEntity.ok(updatedLibrary);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/{id}")

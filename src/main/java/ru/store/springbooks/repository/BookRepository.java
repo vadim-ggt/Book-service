@@ -7,7 +7,6 @@ import ru.store.springbooks.model.Book;
 
 
 
-
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
 

@@ -13,7 +13,7 @@ public interface BookService {
 
     Book getBookById(Long id);
 
-    void deleteBook(Long id);
+    boolean deleteBook(Long id);
 
     List<Book> searchBook(Map<String, String> params);
 

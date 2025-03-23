@@ -2,7 +2,10 @@ package ru.store.springbooks.controller;
 
 import java.util.List;
 import java.util.Map;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +26,7 @@ import ru.store.springbooks.service.BookService;
 @RequiredArgsConstructor
 public class BookController {
 
+
     private final BookService  service;
     private final LibraryRepository libraryRepository;
 
@@ -30,6 +34,7 @@ public class BookController {
     public List<Book> findAllBooks() {
         return service.findAllBooks();
     }
+
 
     @PostMapping
     public ResponseEntity<Book> saveBook(@RequestBody Book book) {
@@ -53,16 +58,32 @@ public class BookController {
 
 
     @GetMapping("/{id}")
-    public Book findBookById(@PathVariable("id") Long id) {
-        return service.getBookById(id);
+    @Transactional
+    public ResponseEntity<Book> findBookById(@PathVariable("id") Long id) {
+        try {
+            Book book = service.getBookById(id);
+            return ResponseEntity.ok(book);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 
     @DeleteMapping("/delete_book/{id}")
-    public void deleteBook(@PathVariable("id") Long id) {
-        service.deleteBook(id);
+    public ResponseEntity<String> deleteBook(@PathVariable("id") Long id) {
+        try {
+            boolean isDeleted = service.deleteBook(id);
+            if (isDeleted) {
+                return ResponseEntity.ok("Книга успешно удалена");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Книга с данным ID не найдена");
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка при удалении книги: " + e.getMessage());
+        }
     }
-
 
 
     @GetMapping("/search")
@@ -70,10 +91,15 @@ public class BookController {
         return service.searchBook(params);
     }
 
+
     @PutMapping("/{id}")
     public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book updatedBook) {
-        Book book = service.updateBook(id, updatedBook);
-        return ResponseEntity.ok(book);
+        try {
+            Book book = service.updateBook(id, updatedBook);
+            return ResponseEntity.ok(book);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }

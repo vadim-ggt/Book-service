@@ -3,6 +3,7 @@ package ru.store.springbooks.service.impl;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import ru.store.springbooks.model.Library;
 import ru.store.springbooks.repository.BookRepository;
 import ru.store.springbooks.repository.LibraryRepository;
 import ru.store.springbooks.service.BookService;
+import ru.store.springbooks.utils.InMemoryCache;
 
 @Service
 @AllArgsConstructor
@@ -20,12 +22,18 @@ public class BookServiceImpl implements BookService {
 
     private final BookRepository repository;
     private final LibraryRepository libraryRepository;
-    private final BookRepository bookRepository;
+    private final InMemoryCache<Long, Book> bookCache;
+
 
     @Override
     public List<Book> findAllBooks() {
-        return repository.findAll(); // Исправленный вызов метода из JpaRepository
+        List<Book> books = repository.findAll();
+        if (books.isEmpty()) {
+            log.info("Книги не найдены в базе данных.");
+        }
+        return books;
     }
+
 
     @Override
     public Book saveBook(Book book) {
@@ -41,22 +49,44 @@ public class BookServiceImpl implements BookService {
                     log.error("Ошибка: Библиотека с ID {} не найдена!", book.getLibrary().getId());
                     return new RuntimeException("Library not found!");
                 });
+        Book savedBook = repository.save(book);
 
-        book.setLibrary(library); // Устанавливаем библиотеку перед сохранением
+        book.setLibrary(library);
         log.info("Сохранение книги с библиотекой: {}", library);
 
-        return repository.save(book);
+        bookCache.put(savedBook.getId(), savedBook);
+        log.info("Книга добавлена в кеш: {}", savedBook);
+
+        return savedBook;
     }
+
 
     @Override
     public Book getBookById(Long id) {
-        return repository.findById(id) // JpaRepository предоставляет findById()
+        Book cachedBook = bookCache.get(id);
+        if (cachedBook != null) {
+            log.info("Книга получена из кеша: {}", cachedBook);
+            return cachedBook;
+        }
+
+        Book book = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Книга не найдена"));
+        bookCache.put(id, book);
+        log.info("Книга загружена из БД и добавлена в кеш: {}", book);
+        return book;
     }
 
+
     @Override
-    public void deleteBook(Long id) {
-        repository.deleteById(id); // Исправленный вызов метода из JpaRepository
+    public boolean deleteBook(Long id) {
+        Optional<Book> book = repository.findById(id);
+        if (book.isPresent()) {
+            repository.deleteById(id);
+            bookCache.evict(id);
+            log.info("Книга удалена из кеша и базы данных: {}", id);
+            return true;
+        }
+        return false;
     }
 
 
@@ -80,13 +110,19 @@ public class BookServiceImpl implements BookService {
         return repository.findAll();
     }
 
+
     @Override
     public Book updateBook(Long id, Book updatedBook) {
-        Book book = bookRepository.findById(id)
+        Book book = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
+
         book.setTitle(updatedBook.getTitle());
         book.setAuthor(updatedBook.getAuthor());
         book.setYear(updatedBook.getYear());
-        return bookRepository.save(book);
+
+        Book savedBook = repository.save(book);
+        bookCache.put(id, savedBook); // Обновляем кеш
+        log.info("Книга обновлена в кешe: {}", savedBook);
+        return savedBook;
     }
 }

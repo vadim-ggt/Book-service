@@ -1,6 +1,9 @@
 package ru.store.springbooks.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,7 +31,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(exclude = "books")
-@ToString(exclude = "books")
+@ToString(exclude = {"users", "books"})
 public class Library {
 
     @Id
@@ -42,9 +45,8 @@ public class Library {
     private String address;
 
     @OneToMany(mappedBy = "library", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
+    @JsonManagedReference(value = "y")
     private List<Book> books;
-
 
     @ManyToMany
     @JoinTable(
@@ -52,6 +54,5 @@ public class Library {
             joinColumns = @JoinColumn(name = "library_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    @JsonIgnore
     private List<User> users;
 }
