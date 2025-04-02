@@ -16,5 +16,5 @@ public interface RequestService {
 
     void updateOverdueRequests();
 
-    List<Request> getRequestsByUserAndStatus(Long userId, RequestStatus status);
+    List<Request> getRequestsByUserAndStatus(String userName, RequestStatus status);
 }

@@ -60,18 +60,13 @@ public class BookController {
     @GetMapping("/{id}")
     @Transactional
     public ResponseEntity<Book> findBookById(@PathVariable("id") Long id) {
-        try {
             Book book = service.getBookById(id);
             return ResponseEntity.ok(book);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
     }
 
 
     @DeleteMapping("/delete_book/{id}")
     public ResponseEntity<String> deleteBook(@PathVariable("id") Long id) {
-        try {
             boolean isDeleted = service.deleteBook(id);
             if (isDeleted) {
                 return ResponseEntity.ok("Книга успешно удалена");
@@ -79,10 +74,7 @@ public class BookController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Книга с данным ID не найдена");
             }
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Произошла ошибка при удалении книги: " + e.getMessage());
-        }
+
     }
 
 
@@ -94,12 +86,9 @@ public class BookController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book updatedBook) {
-        try {
+
             Book book = service.updateBook(id, updatedBook);
             return ResponseEntity.ok(book);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
 
+    }
 }

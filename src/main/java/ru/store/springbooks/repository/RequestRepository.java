@@ -18,7 +18,7 @@ import java.util.List;
             @Query("SELECT r FROM Request r WHERE r.endDate < :date AND r.status <> :status")
             List<Request> findAllByEndDateBeforeAndStatusNot(@Param("date") LocalDateTime date, @Param("status") RequestStatus status);
 
-            @Query("SELECT r FROM Request r WHERE r.user.id = :userId AND r.status = :status")
-            List<Request> findAllByUserAndStatus(@Param("userId") Long userId, @Param("status") RequestStatus status);
+            @Query("SELECT r FROM Request r WHERE r.user.username = :userName AND r.status = :status")
+            List<Request> findAllByUserAndStatus(@Param("userName") String userName, @Param("status") RequestStatus status);
 
     }

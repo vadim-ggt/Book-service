@@ -13,7 +13,7 @@ public interface LibraryService {
 
     boolean deleteLibrary(Long id);
 
-    Library addUserToLibrary(Long libraryId, Long userId);  // Добавить пользователя в библиотеку
+    Library addUserToLibrary(Long libraryId, Long userId);
 
     Library updateLibrary(Long id, Library updatedLibrary);
 

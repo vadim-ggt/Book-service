@@ -3,16 +3,17 @@ package ru.store.springbooks.service.impl;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.store.springbooks.exception.EntityNotFoundException;
 import ru.store.springbooks.model.Book;
 import ru.store.springbooks.model.Library;
 import ru.store.springbooks.repository.BookRepository;
 import ru.store.springbooks.repository.LibraryRepository;
 import ru.store.springbooks.service.BookService;
-import ru.store.springbooks.utils.InMemoryCache;
+import ru.store.springbooks.utils.CustomCache;
 
 @Service
 @AllArgsConstructor
@@ -22,7 +23,7 @@ public class BookServiceImpl implements BookService {
 
     private final BookRepository repository;
     private final LibraryRepository libraryRepository;
-    private final InMemoryCache<Long, Book> bookCache;
+    private final CustomCache<Long, Book> bookCache;
 
 
     @Override
@@ -47,14 +48,14 @@ public class BookServiceImpl implements BookService {
         Library library = libraryRepository.findById(book.getLibrary().getId())
                 .orElseThrow(() -> {
                     log.error("Ошибка: Библиотека с ID {} не найдена!", book.getLibrary().getId());
-                    return new RuntimeException("Library not found!");
+                    return new EntityNotFoundException("Library", book.getLibrary().getId());
                 });
-        Book savedBook = repository.save(book);
 
         book.setLibrary(library);
+        Book savedBook = repository.save(book);
         log.info("Сохранение книги с библиотекой: {}", library);
 
-        bookCache.put(savedBook.getId(), savedBook);
+        bookCache.put(savedBook.getId(), savedBook); // Добавляем в кеш
         log.info("Книга добавлена в кеш: {}", savedBook);
 
         return savedBook;
@@ -70,8 +71,9 @@ public class BookServiceImpl implements BookService {
         }
 
         Book book = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Книга не найдена"));
-        bookCache.put(id, book);
+                .orElseThrow(() -> new EntityNotFoundException("Book", id));
+
+        bookCache.put(id, book); // Добавляем в кеш
         log.info("Книга загружена из БД и добавлена в кеш: {}", book);
         return book;
     }
@@ -79,14 +81,13 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public boolean deleteBook(Long id) {
-        Optional<Book> book = repository.findById(id);
-        if (book.isPresent()) {
-            repository.deleteById(id);
-            bookCache.evict(id);
-            log.info("Книга удалена из кеша и базы данных: {}", id);
-            return true;
-        }
-        return false;
+        Book book = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Book", id));
+
+        repository.deleteById(id);
+        bookCache.remove(id); // Удаляем из кеша
+        log.info("Книга удалена из кеша и базы данных: {}", id);
+        return true;
     }
 
 
@@ -96,25 +97,34 @@ public class BookServiceImpl implements BookService {
         String author = params.get("author");
         Integer year = params.containsKey("year") ? Integer.parseInt(params.get("year")) : null;
 
+        List<Book> books;
+
         if (title != null && author != null && year != null) {
-            return repository.findByTitleIgnoreCaseAndAuthorIgnoreCaseAndYear(title, author, year);
+            books = repository.findByTitleIgnoreCaseAndAuthorIgnoreCaseAndYear(title, author, year);
         } else if (title != null && author != null) {
-            return repository.findByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+            books = repository.findByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
         } else if (title != null) {
-            return repository.findByTitleIgnoreCase(title);
+            books = repository.findByTitleIgnoreCase(title);
         } else if (author != null) {
-            return repository.findByAuthorIgnoreCase(author);
+            books = repository.findByAuthorIgnoreCase(author);
         } else if (year != null) {
-            return repository.findByYear(year);
+            books = repository.findByYear(year);
+        } else {
+            books = repository.findAll();
         }
-        return repository.findAll();
+
+        if (books.isEmpty()) {
+            throw new EntityNotFoundException("Book", null); // Можно сделать null для ID, так как книги не найдены
+        }
+
+        return books;
     }
 
 
     @Override
     public Book updateBook(Long id, Book updatedBook) {
         Book book = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Book", id));
 
         book.setTitle(updatedBook.getTitle());
         book.setAuthor(updatedBook.getAuthor());
@@ -122,7 +132,8 @@ public class BookServiceImpl implements BookService {
 
         Book savedBook = repository.save(book);
         bookCache.put(id, savedBook); // Обновляем кеш
-        log.info("Книга обновлена в кешe: {}", savedBook);
+        log.info("Книга обновлена в кеше: {}", savedBook);
         return savedBook;
     }
+
 }

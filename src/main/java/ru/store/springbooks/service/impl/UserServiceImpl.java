@@ -5,12 +5,17 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.store.springbooks.exception.EmailAlreadyExistsException;
+import ru.store.springbooks.exception.EntityNotFoundException;
+import ru.store.springbooks.exception.InvalidPasswordException;
+import ru.store.springbooks.exception.UsernameAlreadyExistsException;
 import ru.store.springbooks.model.Library;
 import ru.store.springbooks.model.Request;
 import ru.store.springbooks.model.User;
 import ru.store.springbooks.repository.UserRepository;
 import ru.store.springbooks.service.UserService;
-import ru.store.springbooks.utils.InMemoryCache;
+import ru.store.springbooks.utils.CustomCache;
+
 
 @Slf4j
 @Service
@@ -18,26 +23,43 @@ import ru.store.springbooks.utils.InMemoryCache;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final InMemoryCache<Long, User> userCache;
-
+    private final CustomCache<Long, User> userCache;
 
     @Override
     public List<User> findAllUsers() {
         return userRepository.findAll();
     }
 
+
     @Override
     public User saveUser(User user) {
+        // Проверка на уникальность email
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new EmailAlreadyExistsException(user.getEmail());
+        }
 
+        // Проверка на уникальность username
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new UsernameAlreadyExistsException(user.getUsername());
+        }
+
+        // Проверка пароля
+        if (!isPasswordValid(user.getPassword())) {
+            throw new InvalidPasswordException();
+        }
+
+        // Сохраняем пользователя
         User savedUser = userRepository.save(user);
 
+        // Добавляем пользователя в кеш
         userCache.put(savedUser.getId(), savedUser);
+        log.info("User saved and added to cache: {}", savedUser);
+
         return savedUser;
     }
 
     @Override
     public User getUserById(Long id) {
-
         User cachedUser = userCache.get(id);
         if (cachedUser != null) {
             log.info("User fetched from cache: {}", cachedUser);
@@ -45,32 +67,29 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User", id));
 
         userCache.put(id, user);
         log.info("User fetched from DB and added to cache: {}", user);
         return user;
     }
 
+
     @Override
     public boolean deleteUser(Long id) {
-        Optional<User> user = userRepository.findById(id);
-        if (user.isPresent()) {
-            userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User", id));  // выбрасываем исключение, если пользователь не найден
 
-            userCache.evict(id);
-            log.info("User deleted from DB and cache: {}", user.get());
-            return true;
-        } else {
-            return false;
-        }
+        userRepository.deleteById(id);
+        userCache.remove(id);
+        log.info("User deleted from DB and cache: {}", id);
+        return true;
     }
 
 
     @Override
     public List<Library> getUserLibraries(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = getUserById(id);
         return user.getLibraries();
     }
 
@@ -78,17 +97,38 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateUser(Long id, User updatedUser) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User", id));
 
         user.setUsername(updatedUser.getUsername());
         user.setPassword(updatedUser.getPassword());
         user.setEmail(updatedUser.getEmail());
 
         User savedUser = userRepository.save(user);
-
         userCache.put(savedUser.getId(), savedUser);
         log.info("User updated in DB and cache: {}", savedUser);
         return savedUser;
     }
+
+
+
+    private boolean isPasswordValid(String password) {
+
+        if (password.length() < 8) {
+            return false;
+        }
+
+
+        if (!password.matches(".*\\d.*")) {
+            return false;
+        }
+
+
+        if (!password.matches(".*[A-Z].*")) {
+            return false;
+        }
+
+        return true;
+    }
+
 
 }

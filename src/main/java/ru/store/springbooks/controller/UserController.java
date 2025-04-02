@@ -27,6 +27,7 @@ public class UserController {
         return userService.findAllUsers();
     }
 
+
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
         User savedUser = userService.saveUser(user);
@@ -36,11 +37,8 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(userService.getUserById(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        User user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 
 
@@ -60,6 +58,7 @@ public class UserController {
         }
     }
 
+
     @GetMapping("/{id}/libraries")
     public ResponseEntity<List<?>> getUserLibraries(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserLibraries(id));
@@ -75,8 +74,6 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
-
-
 
 
 }

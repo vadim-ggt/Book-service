@@ -2,8 +2,10 @@
 
 
     import lombok.RequiredArgsConstructor;
+    import lombok.extern.slf4j.Slf4j;
     import org.springframework.scheduling.annotation.Scheduled;
     import org.springframework.stereotype.Service;
+    import ru.store.springbooks.exception.EntityNotFoundException;
     import ru.store.springbooks.repository.BookRepository;
     import ru.store.springbooks.repository.RequestRepository;
     import ru.store.springbooks.repository.UserRepository;
@@ -12,12 +14,13 @@
     import ru.store.springbooks.model.User;
     import ru.store.springbooks.model.enums.RequestStatus;
     import ru.store.springbooks.service.RequestService;
-    import ru.store.springbooks.utils.InMemoryCache;
+    import ru.store.springbooks.utils.CustomCache;
+
 
     import java.time.LocalDateTime;
     import java.util.List;
 
-
+    @Slf4j
     @Service
     @RequiredArgsConstructor
     public class RequestServiceImpl implements RequestService {
@@ -25,15 +28,15 @@
         private final RequestRepository requestRepository;
         private final BookRepository bookRepository;
         private final UserRepository userRepository;
-        private final InMemoryCache<Long, Request> requestCache;
+        private final CustomCache<Long, Request> requestCache;
 
 
         @Override
         public Request createRequest(Long bookId, Long userId) {
             Book book = bookRepository.findById(bookId)
-                    .orElseThrow(() -> new RuntimeException("Книга не найдена"));
+                    .orElseThrow(() -> new EntityNotFoundException("Book", bookId));
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                    .orElseThrow(() -> new EntityNotFoundException("User", userId));
 
             Request request = Request.builder()
                     .book(book)
@@ -42,65 +45,72 @@
                     .createdAt(LocalDateTime.now())
                     .build();
 
-
             Request savedRequest = requestRepository.save(request);
-
-
             requestCache.put(savedRequest.getId(), savedRequest);
 
+            log.info("Created and cached new request: {}", savedRequest);
             return savedRequest;
         }
+
 
         @Override
         public void updateRequestStatus(Long requestId, RequestStatus status) {
             Request request = requestCache.get(requestId);
             if (request == null) {
                 request = requestRepository.findById(requestId)
-                        .orElseThrow(() -> new RuntimeException("Заявка не найдена"));
+                        .orElseThrow(() -> new EntityNotFoundException("Request", requestId));
             }
 
             request.setStatus(status);
-
             if (status == RequestStatus.ACTIVE) {
                 request.setStartDate(LocalDateTime.now());
                 request.setEndDate(LocalDateTime.now().plusMinutes(1));
             }
 
+
             requestRepository.save(request);
             requestCache.put(request.getId(), request);
+
+            log.info("Updated request status to {}: {}", status, request);
         }
+
 
         @Override
         public List<Request> getRequestsByBook(Long bookId) {
-            Book book = bookRepository.findById(bookId)
-                    .orElseThrow(() -> new RuntimeException("Книга не найдена"));
+            bookRepository.findById(bookId)
+                    .orElseThrow(() -> new EntityNotFoundException("Book", bookId));
             return requestRepository.findRequestsByBookId(bookId);
         }
 
+
         @Override
         public List<Request> getRequestsByUser(Long userId) {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("User", userId));
             return requestRepository.findRequestsByUserId(userId);
         }
+
 
         @Override
         public void updateOverdueRequests() {
             LocalDateTime today = LocalDateTime.now();
-
             List<Request> overdueRequests = requestRepository.findAllByEndDateBeforeAndStatusNot(today, RequestStatus.RETURNED);
 
             for (Request request : overdueRequests) {
                 request.setStatus(RequestStatus.OVERDUE);
+                requestCache.put(request.getId(), request);
             }
 
             requestRepository.saveAll(overdueRequests);
+            log.info("Updated {} overdue requests", overdueRequests.size());
         }
 
+
         @Override
-        public List<Request> getRequestsByUserAndStatus(Long userId, RequestStatus status) {
-            return requestRepository.findAllByUserAndStatus(userId, status);
+        public List<Request> getRequestsByUserAndStatus(String userName, RequestStatus status) {
+            return requestRepository.findAllByUserAndStatus(userName, status);
         }
+
 
         @Scheduled(cron = "0 0 * * * ?")
         public void scheduledOverdueUpdate() {

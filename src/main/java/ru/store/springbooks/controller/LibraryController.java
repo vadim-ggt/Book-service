@@ -22,10 +22,12 @@ public class LibraryController {
 
     private final LibraryService libraryService;
 
+
     @GetMapping
     public List<Library> getAllLibraries() {
         return libraryService.findAllLibraries();
     }
+
 
     @PostMapping
     public ResponseEntity<Library> createLibrary(@RequestBody Library library) {
@@ -36,11 +38,8 @@ public class LibraryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Library> getLibraryById(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(libraryService.getLibraryById(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Library library = libraryService.getLibraryById(id);
+        return ResponseEntity.ok(library);
     }
 
 
@@ -63,7 +62,7 @@ public class LibraryController {
 
     @PostMapping("/{libraryId}/addUser/{userId}")
     public ResponseEntity<Library>  addUserToLibrary(@PathVariable Long libraryId,
-                                                    @PathVariable Long userId) {
+                                                     @PathVariable Long userId) {
         try {
             Library updatedLibrary = libraryService.addUserToLibrary(libraryId, userId);
             return ResponseEntity.ok(updatedLibrary);
@@ -71,6 +70,7 @@ public class LibraryController {
             return ResponseEntity.notFound().build();
         }
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<Library> updateLibrary(@PathVariable Long id,
