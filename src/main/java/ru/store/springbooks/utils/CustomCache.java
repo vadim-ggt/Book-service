@@ -1,13 +1,11 @@
 package ru.store.springbooks.utils;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import lombok.extern.slf4j.Slf4j;
-import java.util.LinkedHashMap;
-
 
 @Slf4j
 public class CustomCache<K, V> {
@@ -20,7 +18,7 @@ public class CustomCache<K, V> {
     public CustomCache() {
         this.maxAgeInMillis = 60000; // 60 секунд
         this.maxSize = 1000;
-        this.cache = new LinkedHashMap<K, V> (maxSize, 0.75f, true) {
+        this.cache = new LinkedHashMap<K, V>(maxSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
                 boolean shouldRemove = size() > maxSize;

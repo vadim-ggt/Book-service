@@ -1,11 +1,21 @@
 package ru.store.springbooks.model;
 
-import com.fasterxml.jackson.annotation.*;
-import jakarta.persistence.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.List;
-
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "users")
@@ -30,11 +40,9 @@ public class User {
     private String email;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    /*@JsonManagedReference(value = "t")*/
     private List<Request> requests;
 
     @ManyToMany(mappedBy = "users")
-    /*@JsonBackReference(value = "library-users")*/
     @JsonIgnore
     private List<Library> libraries;
 }

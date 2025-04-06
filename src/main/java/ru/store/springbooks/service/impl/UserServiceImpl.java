@@ -78,7 +78,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean deleteUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User", id));  // выбрасываем исключение, если пользователь не найден
+                .orElseThrow(() -> new EntityNotFoundException("User", id));
 
         userRepository.deleteById(id);
         userCache.remove(id);
@@ -121,7 +121,6 @@ public class UserServiceImpl implements UserService {
         if (!password.matches(".*\\d.*")) {
             return false;
         }
-
 
         if (!password.matches(".*[A-Z].*")) {
             return false;

@@ -3,7 +3,6 @@ package ru.store.springbooks.service.impl;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -114,7 +113,7 @@ public class BookServiceImpl implements BookService {
         }
 
         if (books.isEmpty()) {
-            throw new EntityNotFoundException("Book", null); // Можно сделать null для ID, так как книги не найдены
+            throw new EntityNotFoundException("Book", null);
         }
 
         return books;

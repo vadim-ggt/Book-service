@@ -1,13 +1,18 @@
 package ru.store.springbooks.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ru.store.springbooks.model.Request;
 import ru.store.springbooks.model.enums.RequestStatus;
 import ru.store.springbooks.service.RequestService;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/requests")
@@ -17,7 +22,8 @@ public class RequestController {
 
 
     @PostMapping("/create/{bookId}/{userId}")
-    public ResponseEntity<Request> createRequest(@PathVariable Long bookId, @PathVariable Long userId) {
+    public ResponseEntity<Request> createRequest(@PathVariable Long bookId,
+                                                 @PathVariable Long userId) {
         return ResponseEntity.ok(requestService.createRequest(bookId, userId));
     }
 
@@ -35,7 +41,8 @@ public class RequestController {
 
 
     @PatchMapping("/{requestId}/status")
-    public ResponseEntity<Void> updateRequestStatus(@PathVariable Long requestId, @RequestParam RequestStatus status) {
+    public ResponseEntity<Void> updateRequestStatus(@PathVariable Long requestId,
+                                                    @RequestParam RequestStatus status) {
         requestService.updateRequestStatus(requestId, status);
         return ResponseEntity.ok().build();
     }
