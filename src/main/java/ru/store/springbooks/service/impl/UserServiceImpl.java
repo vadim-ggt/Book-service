@@ -125,11 +125,8 @@ public class UserServiceImpl implements UserService {
             return false;
         }
 
-        if (!upperCasePattern.matcher(password).matches()) {
-            return false;
-        }
+        return upperCasePattern.matcher(password).matches();
 
-        return true;
     }
 
 
