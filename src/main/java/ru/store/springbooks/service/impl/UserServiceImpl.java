@@ -118,11 +118,14 @@ public class UserServiceImpl implements UserService {
         }
 
 
-        if (!password.matches(".*\\d.*")) {
+        Pattern digitPattern = Pattern.compile(".*\\d.*");
+        Pattern upperCasePattern = Pattern.compile(".*[A-Z].*");
+
+        if (!digitPattern.matcher(password).matches()) {
             return false;
         }
 
-        if (!password.matches(".*[A-Z].*")) {
+        if (!upperCasePattern.matcher(password).matches()) {
             return false;
         }
 
