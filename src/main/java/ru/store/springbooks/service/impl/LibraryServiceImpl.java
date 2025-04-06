@@ -23,6 +23,11 @@ public class LibraryServiceImpl implements LibraryService {
     private final UserRepository userRepository;
     private final CustomCache<Long, Library> libraryCache;
 
+
+    public static class Constants {
+        public static final String ENTITY_LIBRARY = "Library";
+    }
+
     @Override
     public List<Library> findAllLibraries() {
         return libraryRepository.findAll();
@@ -46,7 +51,7 @@ public class LibraryServiceImpl implements LibraryService {
         }
 
         Library library = libraryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Library", id));
+                .orElseThrow(() -> new EntityNotFoundException("ENTITY_LIBRARY", id));
 
         libraryCache.put(id, library);
         log.info("Library fetched from DB and added to cache: {}", library);
@@ -58,7 +63,7 @@ public class LibraryServiceImpl implements LibraryService {
     public boolean deleteLibrary(Long id) {
         if (!libraryRepository.existsById(id)) {
             log.error("Library with ID {} not found, deletion failed", id);
-            throw new EntityNotFoundException("Library", id);
+            throw new EntityNotFoundException("ENTITY_LIBRARY", id);
         }
 
         libraryRepository.deleteById(id);
@@ -71,7 +76,7 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     public Library addUserToLibrary(Long libraryId, Long userId) {
         Library library = libraryRepository.findById(libraryId)
-                .orElseThrow(() -> new EntityNotFoundException("Library", libraryId));
+                .orElseThrow(() -> new EntityNotFoundException("ENTITY_LIBRARY", libraryId));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User", userId));
 
@@ -89,7 +94,7 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     public Library updateLibrary(Long id, Library updatedLibrary) {
         Library library = libraryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Library", id));
+                .orElseThrow(() -> new EntityNotFoundException("ENTITY_LIBRARY", id));
 
         library.setName(updatedLibrary.getName());
         library.setAddress(updatedLibrary.getAddress());
