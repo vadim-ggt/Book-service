@@ -59,12 +59,6 @@ public class UserController {
     }
 
 
-    @GetMapping("/{id}/libraries")
-    public ResponseEntity<List<?>> getUserLibraries(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserLibraries(id));
-    }
-
-
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
         try {
