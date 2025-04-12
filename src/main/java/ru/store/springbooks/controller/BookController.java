@@ -46,14 +46,6 @@ public class BookController {
     @ApiResponse(responseCode = "200", description = "Книга успешно создана")
     @ApiResponse(responseCode = "400", description = "Некорректные данные запроса")
     public ResponseEntity<Book> saveBook(@RequestBody Book book) {
-        System.out.println("Received Book: " + book);
-        if (book.getLibrary() == null) {
-            throw new RuntimeException("Library is null!");
-        }
-        if (book.getLibrary().getId() == null) {
-            throw new RuntimeException("Library ID is required!");
-        }
-        System.out.println("Library ID: " + book.getLibrary().getId()); // Логирование ID
 
         Library library = libraryRepository.findById(book.getLibrary().getId())
                 .orElseThrow(() -> new RuntimeException("Library not found"));
