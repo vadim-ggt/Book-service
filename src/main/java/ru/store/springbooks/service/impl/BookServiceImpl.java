@@ -3,10 +3,14 @@ package ru.store.springbooks.service.impl;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.store.springbooks.exception.EmptyFieldException;
 import ru.store.springbooks.exception.EntityNotFoundException;
+import ru.store.springbooks.exception.InvalidAuthorNameException;
 import ru.store.springbooks.model.Book;
 import ru.store.springbooks.model.Library;
 import ru.store.springbooks.repository.BookRepository;
@@ -36,12 +40,54 @@ public class BookServiceImpl implements BookService {
 
 
     @Override
+    public List<Book> saveBooksBulk(List<Book> books) {
+        return books.stream()
+                .peek(book -> {
+                    if (book.getAuthor() == null) {
+                        throw new EmptyFieldException("book.author");
+                    }
+                    if (book.getAuthor().matches(".*\\d.*")) {
+                        throw new InvalidAuthorNameException("book.author");
+                    }
+                    if (book.getTitle() == null) {
+                        throw new EmptyFieldException("book.title");
+                    }
+                    if (book.getLibrary() == null || book.getLibrary().getId() == null) {
+                        throw new EmptyFieldException("library.id");
+                    }
+                })
+                .map(book -> {
+                    Library library = libraryRepository.findById(book.getLibrary().getId())
+                            .orElseThrow(() -> new EntityNotFoundException("Library", book.getLibrary().getId()));
+                    book.setLibrary(library);
+                    return repository.save(book);
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
+    @Override
     public Book saveBook(Book book) {
         log.info("Получен запрос на сохранение книги: {}", book);
 
+
+        if (book.getAuthor() == null || book.getAuthor().isEmpty()) {
+            throw new EmptyFieldException("book.author");
+        }
+
+        if (book.getAuthor().matches(".*\\d.*")) {
+            throw new InvalidAuthorNameException("book.author");
+        }
+
+        if (book.getTitle() == null || book.getTitle().isEmpty()) {
+            throw new EmptyFieldException("book.title");
+        }
+
+
         if (book.getLibrary() == null || book.getLibrary().getId() == null) {
             log.error("Ошибка: Library ID отсутствует!");
-            throw new RuntimeException("Library ID is required!");
+            throw new EmptyFieldException("library.id");
         }
 
         Library library = libraryRepository.findById(book.getLibrary().getId())
@@ -59,6 +105,7 @@ public class BookServiceImpl implements BookService {
 
         return savedBook;
     }
+
 
 
     @Override

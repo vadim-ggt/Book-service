@@ -34,6 +34,12 @@ public class GlobalExceptionHandler {
         return ex.getMessage();
     }
 
+    @ExceptionHandler(EmptyFieldException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public String handleEmptyFieldException(EmptyFieldException ex) {
+        return ex.getMessage();
+    }
 
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -52,5 +58,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorMessages.toString(), HttpStatus.BAD_REQUEST);
     }
 
+
+
+    @ExceptionHandler(InvalidAuthorNameException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public String InvalidAuthorNameException(InvalidAuthorNameException ex) {
+        return ex.getMessage();
+    }
 
 }

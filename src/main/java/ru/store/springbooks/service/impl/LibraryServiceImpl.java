@@ -5,6 +5,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.store.springbooks.exception.EmptyFieldException;
 import ru.store.springbooks.exception.EntityNotFoundException;
 import ru.store.springbooks.model.Book;
 import ru.store.springbooks.model.Library;
@@ -35,6 +36,14 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     public Library saveLibrary(Library library) {
+        if (library.getName() == null || library.getName().isBlank()) {
+            throw new EmptyFieldException("library.name");
+        }
+
+        if (library.getAddress() == null || library.getAddress().isBlank()) {
+            throw new EmptyFieldException("library.address");
+        }
+
         Library savedLibrary = libraryRepository.save(library);
         libraryCache.put(savedLibrary.getId(), savedLibrary);
         log.info("Library saved and added to cache: {}", savedLibrary);
@@ -95,6 +104,14 @@ public class LibraryServiceImpl implements LibraryService {
     public Library updateLibrary(Long id, Library updatedLibrary) {
         Library library = libraryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ENTITY_LIBRARY", id));
+
+        if (library.getName() == null || library.getName().isBlank()) {
+            throw new EmptyFieldException("library.name");
+        }
+
+        if (library.getAddress() == null || library.getAddress().isBlank()) {
+            throw new EmptyFieldException("library.address");
+        }
 
         library.setName(updatedLibrary.getName());
         library.setAddress(updatedLibrary.getAddress());

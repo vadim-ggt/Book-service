@@ -1,6 +1,7 @@
 package ru.store.springbooks.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,8 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public void updateRequestStatus(Long requestId, RequestStatus status) {
+
+
         Request request = requestCache.get(requestId);
         if (request == null) {
             request = requestRepository.findById(requestId)
@@ -106,7 +109,16 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<Request> getRequestsByUserAndStatus(String userName, RequestStatus status) {
-        return requestRepository.findAllByUserAndStatus(userName, status);
+
+        List<Request> requests = requestRepository.findAllByUserAndStatus(userName, status);
+
+        if (requests.isEmpty()) {
+            throw new EntityNotFoundException(
+                    String.format("Requests for user '%s' with status '%s'", userName, status)
+            );
+        }
+
+        return requests;
     }
 
 

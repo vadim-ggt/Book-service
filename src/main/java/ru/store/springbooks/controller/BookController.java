@@ -29,7 +29,6 @@ import ru.store.springbooks.service.BookService;
 @RequiredArgsConstructor
 public class BookController {
 
-
     private final BookService  service;
     private final LibraryRepository libraryRepository;
 
@@ -40,12 +39,28 @@ public class BookController {
         return service.findAllBooks();
     }
 
+    @PostMapping("/bulk")
+    @Operation(summary = "Bulk-создание книг", description = "Создает список книг")
+    @ApiResponse(responseCode = "200", description = "Книги успешно созданы")
+    public ResponseEntity<List<Book>> saveBooksBulk(@RequestBody List<Book> books) {
+        List<Book> savedBooks = service.saveBooksBulk(books);
+        return ResponseEntity.ok(savedBooks);
+    }
+
 
     @PostMapping
     @Operation(summary = "Создать книгу", description = "Создает новую книгу в библиотеке")
     @ApiResponse(responseCode = "200", description = "Книга успешно создана")
     @ApiResponse(responseCode = "400", description = "Некорректные данные запроса")
     public ResponseEntity<Book> saveBook(@RequestBody Book book) {
+        System.out.println("Received Book: " + book);
+        if (book.getLibrary() == null) {
+            throw new RuntimeException("Library is null!");
+        }
+        if (book.getLibrary().getId() == null) {
+            throw new RuntimeException("Library ID is required!");
+        }
+        System.out.println("Library ID: " + book.getLibrary().getId()); // Логирование ID
 
         Library library = libraryRepository.findById(book.getLibrary().getId())
                 .orElseThrow(() -> new RuntimeException("Library not found"));

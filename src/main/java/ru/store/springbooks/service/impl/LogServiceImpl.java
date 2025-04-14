@@ -1,5 +1,6 @@
 package ru.store.springbooks.service.impl;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,7 +10,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import org.springframework.core.io.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import ru.store.springbooks.service.LogService;
 
@@ -22,6 +25,34 @@ public class LogServiceImpl implements LogService {
 
     private static final String LOGS_DIR = "logs/"; // лог-файлы сюда
     private static final String SOURCE_LOG_FILE = "app.log"; // исходный лог-файл
+
+
+    @Override
+    public Resource generateAndReturnLogFile(String date) {
+        try {
+            Path sourcePath = Paths.get(SOURCE_LOG_FILE);
+            if (!Files.exists(sourcePath)) {
+                throw new FileNotFoundException("Исходный лог-файл не найден");
+            }
+
+            String filteredLogs = Files.lines(sourcePath)
+                    .filter(line -> line.contains(date))
+                    .collect(Collectors.joining(System.lineSeparator()));
+
+            if (filteredLogs.isEmpty()) {
+                throw new RuntimeException("Нет записей в логах на указанную дату");
+            }
+
+            Path tempFile = Files.createTempFile("log-" + date, ".log");
+            Files.write(tempFile, filteredLogs.getBytes());
+
+            return new InputStreamResource(Files.newInputStream(tempFile));
+        } catch (IOException e) {
+            log.error("Ошибка при создании лог-файла", e);
+            throw new RuntimeException("Ошибка при формировании лог-файла: " + e.getMessage());
+        }
+    }
+
 
     @Override
     public CompletableFuture<String> generateLogFileForDateAsync(String date) {

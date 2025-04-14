@@ -1,20 +1,18 @@
 package ru.store.springbooks.service.impl;
 
 import java.util.List;
-import java.util.Optional;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.store.springbooks.exception.EmailAlreadyExistsException;
-import ru.store.springbooks.exception.EntityNotFoundException;
-import ru.store.springbooks.exception.InvalidPasswordException;
-import ru.store.springbooks.exception.UsernameAlreadyExistsException;
+import ru.store.springbooks.exception.*;
 import ru.store.springbooks.model.Library;
-import ru.store.springbooks.model.Request;
 import ru.store.springbooks.model.User;
 import ru.store.springbooks.repository.UserRepository;
 import ru.store.springbooks.service.UserService;
 import ru.store.springbooks.utils.CustomCache;
+import java.util.regex.Pattern;
 
 
 @Slf4j
@@ -33,6 +31,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User saveUser(User user) {
+
+        if (user.getUsername() == null || user.getUsername().isEmpty()) {
+            throw new EmptyFieldException("user.username");
+        }
+
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            throw new EmptyFieldException("user.password");
+        }
+
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            throw new EmptyFieldException("user.email");
+        }
+
         // Проверка на уникальность email
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new EmailAlreadyExistsException(user.getEmail());
@@ -58,6 +69,7 @@ public class UserServiceImpl implements UserService {
         return savedUser;
     }
 
+
     @Override
     public User getUserById(Long id) {
         User cachedUser = userCache.get(id);
@@ -75,12 +87,15 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @Transactional
     @Override
     public boolean deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User", id));
 
+        userRepository.deleteUserLibraryLinks(id);
         userRepository.deleteById(id);
+
         userCache.remove(id);
         log.info("User deleted from DB and cache: {}", id);
         return true;
@@ -99,6 +114,33 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User", id));
 
+        if (updatedUser.getUsername() == null || updatedUser.getUsername().isEmpty()) {
+            throw new EmptyFieldException("user.username");
+        }
+
+        if (updatedUser.getPassword() == null || updatedUser.getPassword().isEmpty()) {
+            throw new EmptyFieldException("user.password");
+        }
+
+        if (updatedUser.getEmail() == null || updatedUser.getEmail().isEmpty()) {
+            throw new EmptyFieldException("user.email");
+        }
+
+        // Проверка на уникальность email
+        if (userRepository.existsByEmail(updatedUser.getEmail())) {
+            throw new EmailAlreadyExistsException(updatedUser.getEmail());
+        }
+
+        // Проверка на уникальность username
+        if (userRepository.existsByUsername(updatedUser.getUsername())) {
+            throw new UsernameAlreadyExistsException(updatedUser.getUsername());
+        }
+
+        // Проверка пароля
+        if (!isPasswordValid(updatedUser.getPassword())) {
+            throw new InvalidPasswordException();
+        }
+
         user.setUsername(updatedUser.getUsername());
         user.setPassword(updatedUser.getPassword());
         user.setEmail(updatedUser.getEmail());
@@ -116,7 +158,6 @@ public class UserServiceImpl implements UserService {
         if (password.length() < 8) {
             return false;
         }
-
 
         Pattern digitPattern = Pattern.compile(".*\\d.*");
         Pattern upperCasePattern = Pattern.compile(".*[A-Z].*");

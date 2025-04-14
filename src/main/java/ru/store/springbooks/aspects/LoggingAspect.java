@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class LoggingAspect {
 
-
     private static final Logger LOGGER = LoggerFactory.getLogger(LoggingAspect.class);
 
 
@@ -26,6 +25,7 @@ public class LoggingAspect {
 
     @Pointcut("@annotation(ru.store.springbooks.aspects.AspectAnnotation)")
     public void annotatedMethods() {}
+
 
     @Before("allServiceMethods() || annotatedMethods()")
     public void logBefore(JoinPoint joinPoint) {
