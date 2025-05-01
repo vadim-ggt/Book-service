@@ -25,10 +25,6 @@ public class LibraryServiceImpl implements LibraryService {
     private final CustomCache<Long, Library> libraryCache;
 
 
-    public static class Constants {
-        public static final String ENTITY_LIBRARY = "Library";
-    }
-
     @Override
     public List<Library> findAllLibraries() {
         return libraryRepository.findAll();
@@ -60,7 +56,7 @@ public class LibraryServiceImpl implements LibraryService {
         }
 
         Library library = libraryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("ENTITY_LIBRARY", id));
+                .orElseThrow(() -> new EntityNotFoundException("Library", id));
 
         libraryCache.put(id, library);
         log.info("Library fetched from DB and added to cache: {}", library);
@@ -72,7 +68,7 @@ public class LibraryServiceImpl implements LibraryService {
     public boolean deleteLibrary(Long id) {
         if (!libraryRepository.existsById(id)) {
             log.error("Library with ID {} not found, deletion failed", id);
-            throw new EntityNotFoundException("ENTITY_LIBRARY", id);
+            throw new EntityNotFoundException("Library", id);
         }
 
         libraryRepository.deleteById(id);
@@ -85,7 +81,7 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     public Library addUserToLibrary(Long libraryId, Long userId) {
         Library library = libraryRepository.findById(libraryId)
-                .orElseThrow(() -> new EntityNotFoundException("ENTITY_LIBRARY", libraryId));
+                .orElseThrow(() -> new EntityNotFoundException("Library", libraryId));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User", userId));
 
@@ -103,20 +99,27 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     public Library updateLibrary(Long id, Library updatedLibrary) {
         Library library = libraryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("ENTITY_LIBRARY", id));
+                .orElseThrow(() -> new EntityNotFoundException("Library", id));
 
-        if (library.getName() == null || library.getName().isBlank()) {
+        // Проверка полей updatedLibrary на null и пустоту
+        if (updatedLibrary.getName() == null || updatedLibrary.getName().isBlank()) {
             throw new EmptyFieldException("library.name");
         }
 
-        if (library.getAddress() == null || library.getAddress().isBlank()) {
+        if (updatedLibrary.getAddress() == null || updatedLibrary.getAddress().isBlank()) {
             throw new EmptyFieldException("library.address");
         }
 
+        // Если все проверки пройдены, обновляем существующую библиотеку
         library.setName(updatedLibrary.getName());
         library.setAddress(updatedLibrary.getAddress());
 
+        // Сохраняем библиотеку и обновляем кэш
         Library savedLibrary = libraryRepository.save(library);
+        if (savedLibrary == null) {
+            throw new IllegalStateException("Failed to save library.");
+        }
+
         libraryCache.put(savedLibrary.getId(), savedLibrary);
 
         log.info("Library updated and cache refreshed: {}", savedLibrary);
